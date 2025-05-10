@@ -1,39 +1,40 @@
 import streamlit as st
 import joblib
+import json
 import numpy as np
+
 
 # Load model & scaler
 model = joblib.load('./model/best_model.pkl')
 scaler = joblib.load('model/scaler.pkl')
+with open("model/features.json") as f:
+    feature_order = json.load(f)
+  
+st.set_page_config(page_title="Prediksi Dropout Mahasiswa", layout="centered")
 
-st.title("🎓 Prediksi Dropout Mahasiswa - Jaya Jaya Institut")
+st.title("🎓 Prediksi Dropout Mahasiswa")
+st.write("Isi data mahasiswa di bawah ini untuk memprediksi apakah mereka berpotensi Dropout atau Graduate.")
 
-# Form input data
-st.header("Masukkan Data Mahasiswa")
+# Buat form input dari semua fitur
+input_dict = {}
+with st.form("form_prediksi"):
+    for feat in feature_order:
+        if "grade" in feat or "rate" in feat or "GDP" in feat:
+            val = st.number_input(feat, format="%.2f", step=0.1)
+        else:
+            val = st.number_input(feat, step=1)
+        input_dict[feat] = val
 
-# Contoh input
-age = st.slider("Umur saat mendaftar", 17, 60, 20)
-admission_grade = st.slider("Nilai Ujian Masuk", 0, 200, 130)
-curr_1st_grade = st.slider("Nilai Semester 1", 0.0, 20.0, 12.0)
-curr_2nd_grade = st.slider("Nilai Semester 2", 0.0, 20.0, 12.0)
-approved_1st = st.number_input("Matkul Lulus Semester 1", min_value=0)
-approved_2nd = st.number_input("Matkul Lulus Semester 2", min_value=0)
-tuition_ok = st.selectbox("Status Pembayaran Kuliah", ['Lancar', 'Tertunggak'])
+    submitted = st.form_submit_button("🔍 Prediksi")
 
-# Konversi input ke bentuk numerik
-tuition_val = 1 if tuition_ok == 'Lancar' else 0
+# Proses prediksi jika tombol ditekan
+if submitted:
+    # Urutkan input sesuai fitur training
+    input_array = np.array([[input_dict[feat] for feat in feature_order]])
+    input_scaled = scaler.transform(input_array)
 
-# Gabungkan jadi array
-input_data = np.array([[approved_2nd, approved_1st, curr_2nd_grade, curr_1st_grade,
-                        tuition_val, age, admission_grade]])
+    pred = model.predict(input_scaled)[0]
+    prob = model.predict_proba(input_scaled)[0][pred]
+    label = "Dropout" if pred == 1 else "Graduate"
 
-# Scaling
-input_scaled = scaler.transform(input_data)
-
-# Prediksi
-if st.button("Prediksi"):
-    prediction = model.predict(input_scaled)[0]
-    proba = model.predict_proba(input_scaled)[0][prediction]
-
-    status = "Dropout" if prediction == 1 else "Graduate"
-    st.success(f"🚩 Prediksi: **{status}** (Probabilitas: {proba:.2f})")
+    st.success(f"📢 **Prediksi:** {label}  \n🎯 **Probabilitas:** {prob:.2%}")
