@@ -3,7 +3,7 @@ import joblib
 import numpy as np
 
 # Load model & scaler
-model = joblib.load('/model/best_model.pkl')
+model = joblib.load('./model/best_model.pkl')
 scaler = joblib.load('model/scaler.pkl')
 
 st.title("🎓 Prediksi Dropout Mahasiswa - Jaya Jaya Institut")
