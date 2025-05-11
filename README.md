@@ -27,8 +27,6 @@ cd submission
 # Instal seluruh dependency yang dibutuhkan
 pip install -r requirements.txt
 
-# Jalankan aplikasi Streamlit secara lokal
-streamlit run app.py
 ```
 
 ## Business Dashboard
